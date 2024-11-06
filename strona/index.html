@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wanbli Champions League</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2f;
+            color: white;
+            text-align: center;
+        }
+        h1 {
+            margin-top: 20px;
+            font-size: 36px;
+        }
+        .table-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .team-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .team-name {
+            flex: 2;
+            text-align: left;
+        }
+        .points {
+            flex: 1;
+            font-size: 20px;
+            text-align: center;
+        }
+        .button-container {
+            flex: 2;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+        .admin-actions {
+            margin: 20px 0;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 5px;
+            margin: 5px;
+        }
+        button {
+            padding: 5px 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wanbli Champions League</h1>
+    <div class="table-container" id="tableContainer">
+        <!-- Tabela zespołów wypełniana przez JavaScript -->
+    </div>
+
+    <div class="admin-actions">
+        <h3>Logowanie do edycji</h3>
+        <input type="password" id="passwordInput" placeholder="Podaj hasło">
+        <button onclick="authorize()">Zaloguj</button>
+
+        <div id="addTeamSection" style="display: none;">
+            <h3>Dodaj nową drużynę</h3>
+            <input type="text" id="newTeamName" placeholder="Nazwa drużyny">
+            <input type="number" id="newTeamPoints" placeholder="Punkty" min="0">
+            <button onclick="addTeam()">Dodaj drużynę</button>
+        </div>
+    </div>
+
+    <script>
+        const adminPassword = "tajnehaslo"; // Ustaw swoje hasło tutaj
+        let isAuthorized = false;
+
+        let teams = [
+            { name: "B. Dortmund", points: 9 },
+            { name: "Brest", points: 6 },
+            { name: "Benfica", points: 6 },
+            { name: "Leverkusen", points: 6 },
+            { name: "Liverpool", points: 6 },
+            { name: "Aston Villa", points: 4 },
+            { name: "Juventus", points: 4 },
+            { name: "Man City", points: 4 },
+            // Dodaj pozostałe zespoły...
+        ];
+
+        // Wczytaj punkty z localStorage, jeśli istnieją
+        if (localStorage.getItem('teams')) {
+            teams = JSON.parse(localStorage.getItem('teams'));
+        }
+
+        // Zapisz punkty w localStorage
+        function saveTeams() {
+            localStorage.setItem('teams', JSON.stringify(teams));
+        }
+
+        // Funkcja do autoryzacji
+        function authorize() {
+            const inputPassword = document.getElementById('passwordInput').value;
+            if (inputPassword === adminPassword) {
+                isAuthorized = true;
+                alert("Zalogowano pomyślnie");
+                document.getElementById("addTeamSection").style.display = "block";
+                renderTable(); // Odśwież tabelę, aby pokazać przyciski +/-
+            } else {
+                alert("Błędne hasło");
+            }
+        }
+
+        // Renderowanie tabeli
+        function renderTable() {
+            const tableContainer = document.getElementById('tableContainer');
+            tableContainer.innerHTML = ''; // Czyść poprzednią zawartość
+
+            // Sortowanie drużyn według punktów malejąco
+            teams.sort((a, b) => b.points - a.points);
+
+            teams.forEach((team, index) => {
+                const teamRow = document.createElement('div');
+                teamRow.className = 'team-row';
+
+                const teamName = document.createElement('div');
+                teamName.className = 'team-name';
+                teamName.textContent = `${index + 1}. ${team.name}`;
+
+                const pointsDisplay = document.createElement('div');
+                pointsDisplay.className = 'points';
+                pointsDisplay.textContent = `${team.points} pkt`;
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+
+                if (isAuthorized) {
+                    const addButton = document.createElement('button');
+                    addButton.textContent = '+';
+                    addButton.onclick = () => {
+                        team.points += 1;
+                        saveTeams();
+                        renderTable();
+                    };
+
+                    const subtractButton = document.createElement('button');
+                    subtractButton.textContent = '-';
+                    subtractButton.onclick = () => {
+                        if (team.points > 0) team.points -= 1;
+                        saveTeams();
+                        renderTable();
+                    };
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Usuń';
+                    deleteButton.onclick = () => {
+                        teams = teams.filter(t => t !== team);
+                        saveTeams();
+                        renderTable();
+                    };
+
+                    buttonContainer.appendChild(addButton);
+                    buttonContainer.appendChild(subtractButton);
+                    buttonContainer.appendChild(deleteButton);
+                }
+
+                teamRow.appendChild(teamName);
+                teamRow.appendChild(buttonContainer);
+                teamRow.appendChild(pointsDisplay);
+                tableContainer.appendChild(teamRow);
+            });
+        }
+
+        // Funkcja do dodawania nowej drużyny
+        function addTeam() {
+            const newTeamName = document.getElementById("newTeamName").value;
+            const newTeamPoints = parseInt(document.getElementById("newTeamPoints").value) || 0;
+            if (newTeamName) {
+                teams.push({ name: newTeamName, points: newTeamPoints });
+                saveTeams();
+                renderTable();
+            } else {
+                alert("Proszę podać nazwę drużyny");
+            }
+        }
+
+        // Inicjalizacja
+        renderTable();
+    </script>
+</body>
+</html>
